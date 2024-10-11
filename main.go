@@ -1,17 +1,28 @@
 package main
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go prog prog.c
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go ratelimit ratelimit.c
 
 import (
     "log"
     "net"
     "flag"
-    "encoding/binary"
+    "time"
 
+    "golang.org/x/sys/unix"
+    "github.com/cilium/ebpf"
     "github.com/cilium/ebpf/ringbuf"
     "github.com/cilium/ebpf/link"
     "github.com/cilium/ebpf/rlimit"
 )
+
+func getTimeFromBootNs() uint64 {
+    var ts unix.Timespec
+    err := unix.ClockGettime(unix.CLOCK_MONOTONIC, &ts)
+    if err != nil {
+	panic(err)
+    }
+    return uint64(ts.Sec)*uint64(time.Second.Nanoseconds()) + uint64(ts.Nsec)
+}
 
 func main() {
     // Remove resource limits for kernels <5.11.
@@ -24,8 +35,8 @@ func main() {
     flag.Parse()
 
     // Load the compiled eBPF ELF and load it into the kernel.
-    var objs progObjects
-    if err := loadProgObjects(&objs, nil); err != nil {
+    var objs ratelimitObjects
+    if err := loadRatelimitObjects(&objs, nil); err != nil {
 	log.Fatal("Loading eBPF objects:", err)
     }
     defer objs.Close()
@@ -45,6 +56,13 @@ func main() {
     }
     defer xdplink.Close()
 
+    var key uint32 = 0
+    currentTimeInNs := getTimeFromBootNs() 
+    err = objs.ratelimitMaps.RatelimitMap.Update(&key, &currentTimeInNs, ebpf.UpdateAny)
+    if err != nil {
+	    log.Fatalf("Failed to update the map: %v", err)
+    }
+
     rd, err := ringbuf.NewReader(objs.RingbufMap)
     if err != nil {
 	panic(err)
@@ -52,12 +70,11 @@ func main() {
     defer rd.Close()
 
     for {
-	record, err := rd.Read()
+	_, err := rd.Read()
 	if err != nil {
 	    panic(err)
 	}
 
-	data := binary.LittleEndian.Uint32(record.RawSample)
-	log.Printf("Received from bpf event =>  %d\n", data)
+	log.Printf("Received bpf event into userspace...\n")
     }
 }
