@@ -25,7 +25,7 @@ You can also just use `docker compose up -d` directly. Make sure to set the dire
 ```
 docker container ls # Find the container ID
 docker exec -it <container-hash> /bin/bash
-cd multiratelimit
+cd src 
 go generate
 go build
 sudo ./multiratelimit -i eth0

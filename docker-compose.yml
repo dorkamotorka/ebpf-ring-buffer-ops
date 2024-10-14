@@ -6,7 +6,7 @@ services:
     environment:
       TERM: xterm-color
     volumes:
-      - ./spawned:/spawned
+      - ./rate-limit-multi:/src
     hostname: test
     networks:
       mynetwork:
