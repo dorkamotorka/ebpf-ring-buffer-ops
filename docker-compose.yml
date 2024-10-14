@@ -1,0 +1,24 @@
+version: '3.9'
+
+services:
+  test:
+    container_name: test
+    image: dorkamotorka/ubuntu-ebpf
+    privileged: true
+    environment:
+      TERM: xterm-color
+    volumes:
+      - ./normal:/normal
+    hostname: test
+    networks:
+      mynetwork:
+        ipv4_address: 172.18.0.10
+    command: python3 -m http.server 80 
+    restart: unless-stopped  # Ensures it keeps running unless stopped manually
+
+networks:
+  mynetwork:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16

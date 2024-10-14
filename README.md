@@ -12,22 +12,19 @@ docker buildx create --name mybuilder --bootstrap --use
 docker buildx build --push --platform linux/arm64,linux/amd64 --tag dorkamotorka/ubuntu-ebpf -f Dockerfile .
 docker run --rm -it -v ./rate-limit:/rate-limit --privileged -h test --name test --env TERM=xterm-color dorkamotorka/ubuntu-ebpf
 ```
+
+You can also just use `docker compose up -d` directly. 
+
 - Exec into the container:
 ```
 cd rate-limit
 go generate
 go build
-ip a # Check container interface
 sudo ./ratelimit -i eth0
-```
-- In another terminal inside container check container IP and run HTTP server:
-```
-ip a
-python3 -m http.server 80
 ```
 - Make a `curl` request to that IP:
 ```
-curl http://<container-IP>
+curl http://172.18.0.10
 ```
 
 ## Multithreaded Ring Buffer Consumer
