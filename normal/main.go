@@ -6,6 +6,7 @@ import (
     "log"
     "net"
     "flag"
+    "time"
 
     "github.com/cilium/ebpf/ringbuf"
     "github.com/cilium/ebpf/link"
@@ -50,12 +51,34 @@ func main() {
     }
     defer rd.Close()
 
+    count := 0
+    maxCount := 1000
+    var startTime time.Time
     for {
+	if count >= maxCount {
+	    break
+        }
 	_, err := rd.Read()
 	if err != nil {
 	    panic(err)
 	}
 
+	// Artificial user-space processing
+	time.Sleep(200 * time.Millisecond)
+
+	if count == 0 {
+            startTime = time.Now()
+        }
+
 	log.Printf("Received bpf event into userspace...\n")
+	count++
     }
+    
+    // Record the end time
+    endTime := time.Now()
+
+    // Calculate the elapsed time
+    elapsedTime := endTime.Sub(startTime)
+
+    log.Printf("Total time taken for 999 iterations (after the first): %s\n", elapsedTime)
 }

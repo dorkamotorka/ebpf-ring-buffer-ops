@@ -6,24 +6,13 @@ import (
     "log"
     "net"
     "flag"
-    "time"
     "sync"
+    "time"
 
-    "golang.org/x/sys/unix"
-    "github.com/cilium/ebpf"
     "github.com/cilium/ebpf/ringbuf"
     "github.com/cilium/ebpf/link"
     "github.com/cilium/ebpf/rlimit"
 )
-
-func getTimeFromBootNs() uint64 {
-    var ts unix.Timespec
-    err := unix.ClockGettime(unix.CLOCK_MONOTONIC, &ts)
-    if err != nil {
-	panic(err)
-    }
-    return uint64(ts.Sec)*uint64(time.Second.Nanoseconds()) + uint64(ts.Nsec)
-}
 
 func main() {
     // Remove resource limits for kernels <5.11.
@@ -57,13 +46,6 @@ func main() {
     }
     defer xdplink.Close()
 
-    var key uint32 = 0
-    currentTimeInNs := getTimeFromBootNs() 
-    err = objs.spawnedMaps.RatelimitMap.Update(&key, &currentTimeInNs, ebpf.UpdateAny)
-    if err != nil {
-	    log.Fatalf("Failed to update the map: %v", err)
-    }
-
     rd, err := ringbuf.NewReader(objs.RingbufMap)
     if err != nil {
 	panic(err)
@@ -73,7 +55,13 @@ func main() {
     // Create a wait group to synchronize goroutines
     var wg sync.WaitGroup
 
+    count := 0
+    maxCount := 1000
+    var startTime time.Time
     for {
+	if count >= maxCount {
+	    break
+        }
 	_, err := rd.Read()
 	if err != nil {
 	    if err == ringbuf.ErrClosed {
@@ -83,14 +71,27 @@ func main() {
 	    continue
 	}
 
+	if count == 0 {
+            startTime = time.Now()
+        }
+
 	wg.Add(1)
 	go func() {
 	    defer wg.Done()
-    	    log.Printf("Received bpf event into userspace...\n")
+    	    time.Sleep(200 * time.Millisecond)
+	    log.Printf("Received bpf event into userspace...\n")
 	}()
-
+	count++
     }
 
     // Wait for goroutines to finish
     wg.Wait()
+
+    // Record the end time
+    endTime := time.Now()
+
+    // Calculate the elapsed time
+    elapsedTime := endTime.Sub(startTime)
+
+    log.Printf("Total time taken for 999 iterations (after the first): %s\n", elapsedTime)
 }
