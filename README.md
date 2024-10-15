@@ -10,27 +10,15 @@ Demo Repository for eBPF Ring Buffer Rate Limiting &amp; Multithreading
 
 ## How to run
 
-To run the program, follow these steps:
+To run the program in any of the directories, follow these steps:
 
-- First build and run the docker container with all the dependencies:
 ```
-docker buildx create --name mybuilder --bootstrap --use
-docker buildx build --push --platform linux/arm64,linux/amd64 --tag dorkamotorka/ubuntu-ebpf -f Dockerfile .
-docker run --rm -it -v ./rate-limit:/rate-limit --privileged -h test --name test --env TERM=xterm-color dorkamotorka/ubuntu-ebpf
-```
-
-You can also just use `docker compose up -d` directly. Make sure to set the directory you want to mount (`volumes` configuration).
-
-- Exec into the container:
-```
-docker container ls # Find the container ID
-docker exec -it <container-hash> /bin/bash
-cd src 
 go generate
 go build
-sudo ./multiratelimit -i eth0
+sudo ./<binary-name> -i <your-net-interface> # Find network interfaces using `ip a`
 ```
-- Make a `curl` request to that IP:
+- In another terminal run a HTTP Server:
 ```
-curl http://172.18.0.10
+python3 -m http.server 80 
 ```
+- Make the curl request to the HTTP server and inspect the eBPF logs `sudo bpftool prog trace`
