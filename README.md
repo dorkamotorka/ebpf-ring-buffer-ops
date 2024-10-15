@@ -21,4 +21,4 @@ sudo ./<binary-name> -i <your-net-interface> # Find network interfaces using `ip
 ```
 python3 -m http.server 80 
 ```
-- Make the curl request to the HTTP server and inspect the eBPF logs `sudo bpftool prog trace`
+- Make the curl request to the HTTP server and inspect the eBPF logs using `sudo bpftool prog trace`
