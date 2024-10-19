@@ -41,8 +41,8 @@ int xdp_tcp_capture(struct xdp_md *ctx) {
     // Get the shared data from the map
     last_ts = bpf_map_lookup_elem(&ratelimit_map, &key);
     if (!last_ts) {
-	bpf_printk("No timestamp available in the ratelimit_map");
-	return XDP_PASS;
+		bpf_printk("No timestamp available in the ratelimit_map");
+		return XDP_PASS;
     }
 
     // check the rate limit before doing more work
@@ -93,7 +93,7 @@ int xdp_tcp_capture(struct xdp_md *ctx) {
 
     // Update last timestamp
     if (bpf_map_update_elem(&ratelimit_map, &key, &now, 0) != 0) {
-	bpf_printk("Failed to update rate limit");
+		bpf_printk("Failed to update rate limit");
     }
 
     bpf_printk("Submitted event to ringbuffer...");
