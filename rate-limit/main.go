@@ -19,7 +19,7 @@ func getTimeFromBootNs() uint64 {
     var ts unix.Timespec
     err := unix.ClockGettime(unix.CLOCK_MONOTONIC, &ts)
     if err != nil {
-	panic(err)
+		panic(err)
     }
     return uint64(ts.Sec)*uint64(time.Second.Nanoseconds()) + uint64(ts.Nsec)
 }
@@ -27,7 +27,7 @@ func getTimeFromBootNs() uint64 {
 func main() {
     // Remove resource limits for kernels <5.11.
     if err := rlimit.RemoveMemlock(); err != nil {
-	log.Fatal("Removing memlock:", err)
+		log.Fatal("Removing memlock:", err)
     }
 
     var ifname string
@@ -37,7 +37,7 @@ func main() {
     // Load the compiled eBPF ELF and load it into the kernel.
     var objs ratelimitObjects
     if err := loadRatelimitObjects(&objs, nil); err != nil {
-	log.Fatal("Loading eBPF objects:", err)
+		log.Fatal("Loading eBPF objects:", err)
     }
     defer objs.Close()
 
@@ -48,11 +48,11 @@ func main() {
 
     // Attach XDP program to the network interface.
     xdplink, err := link.AttachXDP(link.XDPOptions{
-	Program:   objs.XdpTcpCapture,
-	Interface: iface.Index,
+		Program:   objs.XdpTcpCapture,
+		Interface: iface.Index,
     })
     if err != nil {
-	log.Fatal("Attaching XDP:", err)
+		log.Fatal("Attaching XDP:", err)
     }
     defer xdplink.Close()
 
@@ -65,7 +65,7 @@ func main() {
 
     rd, err := ringbuf.NewReader(objs.RingbufMap)
     if err != nil {
-	panic(err)
+		panic(err)
     }
     defer rd.Close()
 
